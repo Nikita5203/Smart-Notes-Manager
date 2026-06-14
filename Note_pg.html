@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Aesthetic Notes App</title>
+    <style>
+        :root {
+            --bg-color: #F3F0FF;
+            --card-bg: #FFFFFF;
+            --primary: #8B7DFF;
+            --primary-hover: #7465e6;
+            --danger: #FF8BA7;
+            --text-main: #2D2B55;
+            --text-light: #6E6B8A;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            display: flex;
+            justify-content: center;
+            min-height: 100vh;
+            padding: 40px 20px;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 500px;
+        }
+
+        h1 {
+            text-align: center;
+            margin-bottom: 25px;
+            font-weight: 700;
+            letter-spacing: -0.5px;
+        }
+
+        .input-group {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        input {
+            width: 100%;
+            padding: 14px 18px;
+            border: 2px solid #E6E1FF;
+            border-radius: 14px;
+            font-size: 15px;
+            outline: none;
+            transition: all 0.3s ease;
+            background: var(--card-bg);
+            color: var(--text-main);
+        }
+
+        input:focus {
+            border-color: var(--primary);
+            box-shadow: 0 4px 12px rgba(139, 125, 255, 0.15);
+        }
+
+        button {
+            padding: 14px 20px;
+            border: none;
+            border-radius: 14px;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .btn-add {
+            background-color: var(--primary);
+            color: white;
+            white-space: nowrap;
+        }
+
+        .btn-add:hover {
+            background-color: var(--primary-hover);
+            transform: translateY(-2px);
+        }
+
+        .notes-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            margin-top: 20px;
+        }
+
+        .note-card {
+            background: var(--card-bg);
+            padding: 18px;
+            border-radius: 16px;
+            box-shadow: 0 4px 15px rgba(139, 125, 255, 0.08);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .note-text {
+            flex: 1;
+            font-size: 15px;
+            line-height: 1.5;
+            word-break: break-word;
+            margin-right: 15px;
+        }
+
+        .btn-delete {
+            background-color: #FFF0F3;
+            color: var(--danger);
+            padding: 8px 14px;
+            font-size: 13px;
+        }
+
+        .btn-delete:hover {
+            background-color: var(--danger);
+            color: white;
+        }
+
+        .empty-msg {
+            text-align: center;
+            color: var(--text-light);
+            margin-top: 30px;
+            font-style: italic;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h1>✨ My Notes</h1>
+        
+        <input type="text" id="searchInput" placeholder="🔍 Search your notes...">
+        
+        <div class="input-group">
+            <input type="text" id="noteInput" placeholder="Write a new note...">
+            <button class="btn-add" onclick="addNote()">Add</button>
+        </div>
+
+        <div class="notes-list" id="notesList"></div>
+    </div>
+
+    <script>
+        let notes = JSON.parse(localStorage.getItem('myNotes')) || [];
+
+        const noteInput = document.getElementById('noteInput');
+        const searchInput = document.getElementById('searchInput');
+        const notesList = document.getElementById('notesList');
+
+        function saveToLocalStorage() {
+            localStorage.setItem('myNotes', JSON.stringify(notes));
+        }
+
+        function renderNotes(notesToRender) {
+            notesList.innerHTML = '';
+
+            if (notesToRender.length === 0) {
+                notesList.innerHTML = '<p class="empty-msg">No notes found. Add one above! ✨</p>';
+                return;
+            }
+
+            notesToRender.forEach(note => {
+                const noteCard = document.createElement('div');
+                noteCard.className = 'note-card';
+                
+                noteCard.innerHTML = `
+                    <span class="note-text">${note.text}</span>
+                    <button class="btn-delete" onclick="deleteNote(${note.id})">Delete</button>
+                `;
+                
+                notesList.appendChild(noteCard);
+            });
+        }
+
+        function addNote() {
+            const text = noteInput.value.trim();
+            
+            if (text === '') {
+                alert('Please write something first!');
+                return;
+            }
+
+            const newNote = {
+                id: Date.now(),
+                text: text
+            };
+
+            notes.unshift(newNote);
+            saveToLocalStorage();
+            renderNotes(notes);
+            noteInput.value = '';
+        }
+
+        function deleteNote(id) {
+            notes = notes.filter(note => note.id !== id);
+            saveToLocalStorage();
+            
+            const searchTerm = searchInput.value.trim().toLowerCase();
+            if (searchTerm) {
+                searchNotes();
+            } else {
+                renderNotes(notes);
+            }
+        }
+
+        function searchNotes() {
+            const searchTerm = searchInput.value.trim().toLowerCase();
+            
+            if (searchTerm === '') {
+                renderNotes(notes);
+                return;
+            }
+
+            const filteredNotes = notes.filter(note => 
+                note.text.toLowerCase().includes(searchTerm)
+            );
+            
+            renderNotes(filteredNotes);
+        }
+
+        searchInput.addEventListener('input', searchNotes);
+        
+        noteInput.addEventListener('keypress', function(event) {
+            if (event.key === 'Enter') {
+                addNote();
+            }
+        });
+
+        renderNotes(notes);
+    </script>
+</body>
+</html>
